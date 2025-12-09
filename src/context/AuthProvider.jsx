@@ -10,12 +10,18 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const fetchUser = async (session) => {
       if (session?.user) {
-        const { data: userData } = await supabase
+        const { data: userData, error } = await supabase
           .from('users')
           .select('id, full_name, email, role')
           .eq('id', session.user.id)
           .single();
-        setUser(userData || null);
+        
+        if (error) {
+          console.error('Failed to fetch user:', error);
+          setUser(null);
+        } else {
+          setUser(userData);
+        }
       } else {
         setUser(null);
       }
@@ -33,8 +39,13 @@ export const AuthProvider = ({ children }) => {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  // Add role helpers
+  const isAdmin = user?.role === 'admin';
+  const isStaff = user?.role === 'staff';
+  const isStudent = user?.role === 'student';
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, isStaff, isStudent }}>
       {children}
     </AuthContext.Provider>
   );

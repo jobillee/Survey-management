@@ -239,6 +239,7 @@ const Reports = () => {
   const [reportType, setReportType] = useState('summary');
   const [generating, setGenerating] = useState(false);
   const [generatedReports, setGeneratedReports] = useState([]);
+  const [reportData, setReportData] = useState(null);
 
   useEffect(() => {
     fetchSurveys();
@@ -354,12 +355,13 @@ const Reports = () => {
     }
   };
 
-  const handleGenerateReport = async () => {
-    if (!selectedSurvey) return;
-    setGenerating(true);
-    await getSurveyReportData(selectedSurvey.id);
-    setGenerating(false);
-  };
+ const handleGenerateReport = async () => {
+  if (!selectedSurvey) return;
+  setGenerating(true);
+  const data = await getSurveyReportData(selectedSurvey.id);
+  setReportData(data);
+  setGenerating(false);
+};
 
   const reportTypes = [
     { value: 'summary', label: 'Summary Report', description: 'Overview with key statistics and insights', icon: '📊' },
@@ -420,23 +422,34 @@ const Reports = () => {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-semibold mb-4">3. Generate & Download</h3>
               {selectedSurvey ? (
-                <PDFDownloadLink
-                  document={<SurveyReportPDF {...getMockReportData(selectedSurvey.id)} />}
-                  fileName={`${selectedSurvey.title.replace(/\s+/g, '_')}_Report.pdf`}
-                >
-                  {({ loading: pdfLoading }) => (
-                    <button
-                      disabled={pdfLoading}
-                      className="px-6 py-3 rounded-xl font-medium text-white"
-                      style={{ backgroundColor: '#1A1F36' }}
-                    >
-                      {pdfLoading ? 'Generating...' : 'Download PDF'}
-                    </button>
-                  )}
-                </PDFDownloadLink>
-              ) : (
-                <p className="text-gray-500 text-center py-4">Please select a survey to generate a report</p>
-              )}
+  reportData ? (
+    <PDFDownloadLink
+      document={<SurveyReportPDF {...reportData} />}
+      fileName={`${selectedSurvey.title.replace(/\s+/g, '_')}_Report.pdf`}
+    >
+      {({ loading: pdfLoading }) => (
+        <button
+          disabled={pdfLoading}
+          className="px-6 py-3 rounded-xl font-medium text-white"
+          style={{ backgroundColor: '#1A1F36' }}
+        >
+          {pdfLoading ? 'Generating...' : 'Download PDF'}
+        </button>
+      )}
+    </PDFDownloadLink>
+  ) : (
+    <button
+      onClick={handleGenerateReport}
+      className="px-6 py-3 rounded-xl font-medium text-white"
+      style={{ backgroundColor: '#1A1F36' }}
+    >
+      {generating ? 'Generating...' : 'Generate Report'}
+    </button>
+  )
+) : (
+  <p className="text-gray-500 text-center py-4">Please select a survey to generate a report</p>
+)}
+
             </div>
           </div>
 
